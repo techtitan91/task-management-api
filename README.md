@@ -107,8 +107,7 @@ The CI/CD pipeline is configured in `.github/workflows/deploy.yml` and handles:
 
 For the CI/CD pipeline to work, you need to set up these GitHub repository secrets:
 
-- `AWS_ACCESS_KEY_ID`: Your AWS access key
-- `AWS_SECRET_ACCESS_KEY`: Your AWS secret key
+- `SERVERLESS_ACCESS_KEY`: Your Serverless access key
 
 ## Using the API
 
