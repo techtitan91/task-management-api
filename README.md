@@ -2,6 +2,9 @@
 
 A serverless REST API built with AWS API Gateway, Lambda, and DynamoDB that supports CRUD operations for task management.
 
+## Loom
+https://www.loom.com/share/e533c2fec73e4920ac01daa0324c6aa3?sid=a7d89ae5-af1b-4dc1-84b8-c2956892c814
+
 ## Architecture
 
 This project implements a serverless architecture using:
