@@ -23,7 +23,7 @@ export const handler = async (
     const requestBody: CreateTaskRequest = JSON.parse(event.body);
 
     if (!requestBody.title) {
-      return formatErrorResponse(new Error('Title is required'), 400);
+      return formatErrorResponse(new Error('Title is required in body'), 400);
     }
 
     const timestamp = new Date().toISOString();
