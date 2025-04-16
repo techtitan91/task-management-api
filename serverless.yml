@@ -1,0 +1,130 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: projectdemo
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: test
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: task-management-api
+
+frameworkVersion: '3'
+
+plugins:
+  - serverless-esbuild
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1
+  apiGateway:
+    minimumCompressionSize: 1024
+    shouldStartNameWithService: true
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1'
+    NODE_OPTIONS: '--enable-source-maps --stack-trace-limit=1000'
+    TASKS_TABLE: ${self:service}-${self:provider.stage}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:DescribeTable
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - !GetAtt TasksTable.Arn
+
+functions:
+  createTask:
+    handler: src/handlers/task/create.handler
+    events:
+      - http:
+          method: post
+          path: tasks
+          cors: true
+
+  getTasks:
+    handler: src/handlers/task/list.handler
+    events:
+      - http:
+          method: get
+          path: tasks
+          cors: true
+
+  getTaskById:
+    handler: src/handlers/task/getById.handler
+    events:
+      - http:
+          method: get
+          path: tasks/{id}
+          cors: true
+
+  updateTask:
+    handler: src/handlers/task/update.handler
+    events:
+      - http:
+          method: put
+          path: tasks/{id}
+          cors: true
+
+  deleteTask:
+    handler: src/handlers/task/delete.handler
+    events:
+      - http:
+          method: delete
+          path: tasks/{id}
+          cors: true
+
+resources:
+  Resources:
+    ApiGatewayCloudWatchRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: apigateway.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - 'arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs'
+        Path: /
+        RoleName: serverlessApiGatewayCloudWatchRole
+
+    ApiGatewayAccount:
+      Type: AWS::ApiGateway::Account
+      Properties:
+        CloudWatchRoleArn: !GetAtt ApiGatewayCloudWatchRole.Arn
+      DependsOn: ApiGatewayCloudWatchRole
+
+    TasksTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.TASKS_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+package:
+  individually: true
+
+custom:
+  esbuild:
+    bundle: true
+    minify: false
+    sourcemap: true
+    exclude:
+      - aws-sdk
+    target: node20
+    define:
+      require.resolve: undefined
+    platform: node
+    concurrency: 10
